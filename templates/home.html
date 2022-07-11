@@ -1,0 +1,59 @@
+{% extends 'base.html' %}
+
+{% block javascript %}
+    <script type="text/javascript">
+        var inerval = null
+        function ajaxRequest(){
+            console.log('colled')
+            var js_list =  JSON.parse('{{ qs_json|safe }}')
+            
+            $.each(js_list, function(index, value) {
+                $.ajax({
+                    url: value.fields.url,
+                    type: value.fields.request_type,
+                    complete: function(xhr, textStatus) {
+                        color = xhr.status ==  '200'? 'green' : 'red'
+                        $("#status"+value.pk).text(xhr.status)
+                        $("#"+value.pk).css("background-color",color);
+                       
+                    } 
+                });
+              });
+        }
+        function startCheck() {
+            var interval_val = document.getElementById('interval').value
+            console.log('interval ',interval_val )
+            inerval = setInterval(ajaxRequest, interval_val*1000)
+        }
+        function endCheck() {
+            clearInterval(inerval);
+        }
+    </script>
+{% endblock %}
+
+{% block content %}
+    {% if user.is_authenticated %}
+        <table>
+            {% for object in object_list %}
+            <tr id="{{object.id}}">
+                <td>{{ object.request_type }}</td>
+                <td>{{ object.url }}</td>
+                <td id="status{{object.id}}"></td>
+            </tr>
+            {% endfor %}
+        <table>
+        <table>
+            <tr>
+                <td><label>interval in sec: </label><input type="number" id="interval"></td>
+                <td><input type="submit" onclick="startCheck()" value="start check"></td>
+                <td><input type="submit" onclick="endCheck()" value="end check"></td>
+            <tr>
+        </table>
+        <p><a href="{% url 'logout' %}">"Log Out"</a></p>
+
+    {% else %}  
+        <p>You are not logged in</p>
+        <a href="{% url 'login' %}">Log In</a>
+    {% endif %}
+{% endblock %}
+
